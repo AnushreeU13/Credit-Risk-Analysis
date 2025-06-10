@@ -2,8 +2,9 @@ import pandas as pd
 import numpy as np
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
-#Step 1: Load input data 
+# Step 1: Load input data 
 account_df = pd.read_csv(r"C:\Users\uanus\Desktop\Datathon\feature_selected\Account_dim.csv")
 trans_df = pd.read_csv(r"C:\Users\uanus\Desktop\Datathon\feature_selected\transaction_fact_20250325.csv", parse_dates=['transaction_date'])
 wrld_df = pd.read_csv(r"C:\Users\uanus\Desktop\Datathon\feature_selected\wrld_stor_tran_fact_20250325.csv", parse_dates=['transaction_date'])
@@ -26,8 +27,25 @@ else:
     raise ValueError("Insufficient historical months for prediction.")
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-model = RandomForestRegressor(n_estimators=100, random_state=42)
+model = RandomForestRegressor(
+    n_estimators=2000,
+    max_depth=10,
+    min_samples_split=2,
+    random_state=42
+)
+
 model.fit(X_train, y_train)
+
+#Step 4.5: Evaluate model performance 
+y_pred = model.predict(X_test)
+mae = mean_absolute_error(y_test, y_pred)
+rmse = mean_squared_error(y_test, y_pred) ** 0.5
+r2 = r2_score(y_test, y_pred)
+
+print("\nModel Evaluation Metrics (on 20% test set):")
+print(f"  MAE   : {mae:.2f}")
+print(f"  RMSE  : {rmse:.2f}")
+print(f"  R²    : {r2:.2f}")
 
 # Step 5: Predict for all accounts from Account_dim 
 account_ids = account_df['current_account_nbr']
@@ -38,7 +56,7 @@ q4_predictions = model.predict(X_full)
 # Step 6: Weekly date generation for Q4 2025 
 weekly_dates = pd.date_range(start='2025-09-01', end='2025-12-31', freq='7D')
 
-#  Step 7: Map weekly dates to months 
+# Step 7: Map weekly dates to months 
 weekly_distribution = {
     '2025-09': [d for d in weekly_dates if d.month == 9],
     '2025-10': [d for d in weekly_dates if d.month == 10],
